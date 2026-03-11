@@ -61,6 +61,7 @@ func (s *Server) routes() {
 		s.mux.HandleFunc("GET /auth/callback", s.handleGitHubCallback)
 		s.mux.HandleFunc("GET /auth/logout", s.handleLogout)
 		s.mux.Handle("GET /ui", s.withSessionAuth(http.HandlerFunc(s.handleUploadPage)))
+		s.mux.HandleFunc("GET /ui/preview", s.handleUploadPreview)
 	}
 }
 

@@ -41,8 +41,8 @@ docker pull ghcr.io/babarot/image-hosting-server:latest
 
 ```bash
 docker run -d \
-  -e API_KEY=your-secret-key \
-  -e BASE_URL=https://example.com \
+  -e IMAGE_HOSTING_API_KEY=your-secret-key \
+  -e IMAGE_HOSTING_BASE_URL=https://example.com \
   -v /path/to/files:/data/files \
   -p 8080:8080 \
   ghcr.io/babarot/image-hosting-server:latest
@@ -52,10 +52,13 @@ docker run -d \
 
 | Variable | Description | Default |
 |---|---|---|
-| `API_KEY` | API auth key (required) | - |
-| `BASE_URL` | Public URL base | `http://localhost:8080` |
-| `UPLOAD_DIR` | File storage path (inside container) | `/data/images` |
-| `LISTEN_ADDR` | Listen address | `:8080` |
+| `IMAGE_HOSTING_API_KEY` | API auth key (required) | - |
+| `IMAGE_HOSTING_BASE_URL` | Public URL base | `http://localhost:8080` |
+| `IMAGE_HOSTING_UPLOAD_DIR` | File storage path (inside container) | `/data/images` |
+| `IMAGE_HOSTING_LISTEN_ADDR` | Listen address | `:8080` |
+| `GITHUB_CLIENT_ID` | GitHub OAuth client ID | - |
+| `GITHUB_CLIENT_SECRET` | GitHub OAuth client secret | - |
+| `GITHUB_ALLOWED_USERS` | Comma-separated list of allowed GitHub usernames | - |
 
 ## License
 

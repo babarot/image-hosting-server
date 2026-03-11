@@ -49,3 +49,11 @@ func (s *Server) handleUploadPage(w http.ResponseWriter, r *http.Request) {
 		AvatarURL: sess.AvatarURL,
 	})
 }
+
+func (s *Server) handleUploadPreview(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	uploadTmpl.ExecuteTemplate(w, "upload.html", uploadPageData{
+		Username:  "babarot",
+		AvatarURL: "https://avatars.githubusercontent.com/u/4442708",
+	})
+}

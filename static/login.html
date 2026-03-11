@@ -1,112 +1,91 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark light">
 <title>Login - Image Hosting</title>
+<link rel="stylesheet" href="https://unpkg.com/terminal.css@0.7.4/dist/terminal.min.css">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  /* Dark mode (default for this app) */
+  :root {
+    --background-color: #222225;
+    --font-color: #e8e9ed;
+    --primary-color: #e8b004;
+    --secondary-color: #727578;
+    --invert-font-color: #222225;
+    --code-bg-color: #2a2a2d;
+    --error-color: #e24b4b;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --background-color: #fff;
+      --font-color: #151515;
+      --primary-color: #c9880b;
+      --secondary-color: #727578;
+      --invert-font-color: #fff;
+      --code-bg-color: #e8eff2;
+      --error-color: #d20962;
+    }
+  }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #09090b;
-    color: #fafafa;
-    min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
+    min-height: 100dvh;
+    margin: 0;
+    padding: var(--global-space);
   }
-  /* Subtle radial glow behind card */
-  body::before {
-    content: '';
-    position: fixed;
-    top: 50%; left: 50%;
-    width: 600px; height: 600px;
-    transform: translate(-50%, -50%);
-    background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .card {
-    position: relative;
-    background: #18181b;
-    border: 1px solid #27272a;
-    border-radius: 16px;
-    padding: 48px 40px;
+  .login-wrapper {
     width: 100%;
     max-width: 420px;
-    margin: 16px;
-    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
   }
-  .logo {
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 24px;
+  .login-wrapper header {
+    margin-bottom: calc(var(--global-space) * 3);
   }
-  .logo svg { width: 24px; height: 24px; color: #fff; }
-  h1 {
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    margin-bottom: 6px;
+  .login-wrapper header h1 {
+    margin-bottom: var(--global-space);
+    font-size: clamp(1.2rem, 4vw, 1.6rem);
   }
-  .subtitle {
-    color: #71717a;
-    font-size: 14px;
-    line-height: 1.5;
-    margin-bottom: 32px;
+  .login-wrapper header p {
+    color: var(--secondary-color);
   }
   .btn-github {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 8px;
     width: 100%;
-    padding: 12px 16px;
-    background: #fafafa;
-    color: #09090b;
-    border: none;
-    border-radius: 10px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    padding: 12px var(--global-space);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
-  .btn-github:hover {
-    background: #e4e4e7;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  .btn-github svg {
+    width: 16px;
+    height: 16px;
+    fill: var(--invert-font-color);
+    flex-shrink: 0;
   }
-  .btn-github:active {
-    transform: translateY(0);
-  }
-  .btn-github svg { width: 20px; height: 20px; }
-  .footer {
-    margin-top: 24px;
-    text-align: center;
-    color: #3f3f46;
-    font-size: 12px;
+  .login-footer {
+    margin-top: calc(var(--global-space) * 3);
+    color: var(--secondary-color);
+    font-size: calc(var(--global-font-size) - 2px);
   }
 </style>
 </head>
 <body>
-<div class="card">
-  <div class="logo">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-  </div>
-  <h1>Image Hosting</h1>
-  <p class="subtitle">ファイルをアップロードするにはGitHubアカウントでログインしてください</p>
-  <a href="/auth/github" class="btn-github">
-    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-    GitHubでログイン
+<div class="login-wrapper">
+  <header>
+    <h1>Image Hosting <span class="terminal-prompt"></span></h1>
+    <p>Sign in with your GitHub account to upload files.</p>
+  </header>
+  <hr>
+  <br>
+  <a href="/auth/github" class="btn btn-primary btn-github">
+    <svg viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+    Sign in with GitHub
   </a>
-  <div class="footer">Authorized users only</div>
+  <p class="login-footer">Authorized users only.</p>
 </div>
 </body>
 </html>

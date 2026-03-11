@@ -15,7 +15,7 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	allowedUsers := []string{}
-	if v := os.Getenv("ALLOWED_USERS"); v != "" {
+	if v := os.Getenv("GITHUB_ALLOWED_USERS"); v != "" {
 		for _, u := range strings.Split(v, ",") {
 			if trimmed := strings.TrimSpace(u); trimmed != "" {
 				allowedUsers = append(allowedUsers, trimmed)
@@ -24,17 +24,17 @@ func main() {
 	}
 
 	cfg := Config{
-		APIKey:             os.Getenv("API_KEY"),
-		UploadDir:          getEnv("UPLOAD_DIR", "/data/images"),
-		BaseURL:            strings.TrimRight(strings.TrimSuffix(getEnv("BASE_URL", "http://localhost:8080"), "/files"), "/"),
-		ListenAddr:         getEnv("LISTEN_ADDR", ":8080"),
+		APIKey:             os.Getenv("IMAGE_HOSTING_API_KEY"),
+		UploadDir:          getEnv("IMAGE_HOSTING_UPLOAD_DIR", "/data/images"),
+		BaseURL:            strings.TrimRight(strings.TrimSuffix(getEnv("IMAGE_HOSTING_BASE_URL", "http://localhost:8080"), "/files"), "/"),
+		ListenAddr:         getEnv("IMAGE_HOSTING_LISTEN_ADDR", ":8080"),
 		GitHubClientID:     os.Getenv("GITHUB_CLIENT_ID"),
 		GitHubClientSecret: os.Getenv("GITHUB_CLIENT_SECRET"),
 		AllowedUsers:       allowedUsers,
 	}
 
 	if cfg.APIKey == "" {
-		logger.Error("API_KEY environment variable is required")
+		logger.Error("IMAGE_HOSTING_API_KEY environment variable is required")
 		os.Exit(1)
 	}
 
