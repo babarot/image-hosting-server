@@ -108,20 +108,13 @@
     font-size: calc(var(--global-font-size) - 1px);
     padding: var(--global-space);
   }
-  .results table td.thumb {
-    width: 44px;
-    padding-right: 0;
-  }
-  .results table td.thumb img {
-    width: 40px;
-    height: 40px;
-    object-fit: cover;
-    display: block;
-  }
   .results table td.actions {
-    width: 70px;
+    width: 80px;
     text-align: right;
     white-space: nowrap;
+  }
+  .results table td.actions .btn {
+    min-width: 64px;
   }
   .results table td a {
     word-break: break-all;
@@ -170,14 +163,6 @@
     .results table td {
       padding: 2px var(--global-space);
       border: none;
-    }
-    .results table td.thumb {
-      width: auto;
-      padding-bottom: 4px;
-    }
-    .results table td.thumb img {
-      width: 32px;
-      height: 32px;
     }
     .results table td.actions {
       width: auto;
@@ -239,7 +224,7 @@
     const tbody = ensureTable();
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td colspan="3">
+      <td colspan="2">
         <div>${esc(file.name)} <span class="meta">${fmtSize(file.size)}</span></div>
         <div class="progress-wrap"><div class="progress-bar" style="width:0%"></div></div>
       </td>`;
@@ -257,10 +242,8 @@
     xhr.addEventListener('load', () => {
       if (xhr.status === 201) {
         const d = JSON.parse(xhr.responseText);
-        const isImg = /\.(jpg|jpeg|png|gif|webp|svg|avif|ico)$/i.test(d.filename);
         tr.innerHTML = `
-          ${isImg ? `<td class="thumb"><img src="${esc(d.url)}" alt=""></td>` : ''}
-          <td ${isImg ? '' : 'colspan="2"'}>
+          <td>
             <a href="${esc(d.url)}" target="_blank">${esc(d.url)}</a>
             <div class="meta">${esc(d.filename)} &middot; ${fmtSize(d.size)}</div>
           </td>
@@ -270,12 +253,12 @@
       } else {
         let msg = 'Upload failed';
         try { msg = JSON.parse(xhr.responseText).error; } catch(e) {}
-        tr.innerHTML = `<td colspan="3"><span class="error-text">${esc(file.name)}: ${esc(msg)}</span></td>`;
+        tr.innerHTML = `<td colspan="2"><span class="error-text">${esc(file.name)}: ${esc(msg)}</span></td>`;
       }
     });
 
     xhr.addEventListener('error', () => {
-      tr.innerHTML = `<td colspan="3"><span class="error-text">${esc(file.name)}: Network error</span></td>`;
+      tr.innerHTML = `<td colspan="2"><span class="error-text">${esc(file.name)}: Network error</span></td>`;
     });
 
     xhr.open('POST', '/api/upload');
