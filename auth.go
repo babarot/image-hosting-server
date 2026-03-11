@@ -270,7 +270,7 @@ func (s *Server) fetchGitHubUser(token string) (*githubUser, error) {
 }
 
 func (s *Server) isAllowedUser(username string) bool {
-	for _, u := range s.config.AllowedUsers {
+	for _, u := range s.config.GitHubAllowedUsers {
 		if strings.EqualFold(u, username) {
 			return true
 		}

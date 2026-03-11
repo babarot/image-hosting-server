@@ -18,6 +18,12 @@ var (
 )
 
 func (s *Server) handleLoginPage(w http.ResponseWriter, r *http.Request) {
+	// If auth disabled, go straight to upload
+	if s.config.AuthDisabled {
+		http.Redirect(w, r, "/ui", http.StatusTemporaryRedirect)
+		return
+	}
+
 	// If already logged in, redirect to upload page
 	if cookie, err := r.Cookie("session_id"); err == nil {
 		if s.sessions.Get(cookie.Value) != nil {
@@ -36,6 +42,16 @@ type uploadPageData struct {
 }
 
 func (s *Server) handleUploadPage(w http.ResponseWriter, r *http.Request) {
+	// Auth disabled: use placeholder user info
+	if s.config.AuthDisabled {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		uploadTmpl.ExecuteTemplate(w, "upload.html", uploadPageData{
+			Username:  "local",
+			AvatarURL: "",
+		})
+		return
+	}
+
 	cookie, _ := r.Cookie("session_id")
 	sess := s.sessions.Get(cookie.Value)
 	if sess == nil {
@@ -47,13 +63,5 @@ func (s *Server) handleUploadPage(w http.ResponseWriter, r *http.Request) {
 	uploadTmpl.ExecuteTemplate(w, "upload.html", uploadPageData{
 		Username:  sess.Username,
 		AvatarURL: sess.AvatarURL,
-	})
-}
-
-func (s *Server) handleUploadPreview(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	uploadTmpl.ExecuteTemplate(w, "upload.html", uploadPageData{
-		Username:  "babarot",
-		AvatarURL: "https://avatars.githubusercontent.com/u/4442708",
 	})
 }

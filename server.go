@@ -16,7 +16,8 @@ type Config struct {
 	ListenAddr         string
 	GitHubClientID     string
 	GitHubClientSecret string
-	AllowedUsers       []string
+	GitHubAllowedUsers       []string
+	AuthDisabled       bool
 }
 
 type Server struct {
@@ -54,14 +55,18 @@ func (s *Server) routes() {
 	s.mux.Handle("POST /api/upload", s.withRateLimit(s.withUploadAuth(http.HandlerFunc(s.handleUpload))))
 	s.mux.Handle("DELETE /api/delete/{path...}", s.withRateLimit(s.withAuth(http.HandlerFunc(s.handleDelete))))
 
-	// Web UI (only when OAuth is configured)
-	if s.config.GitHubClientID != "" {
+	// Web UI
+	if s.config.AuthDisabled {
+		// No auth: direct access to upload UI (local development)
+		s.mux.HandleFunc("GET /login", s.handleLoginPage)
+		s.mux.HandleFunc("GET /ui", s.handleUploadPage)
+	} else if s.config.GitHubClientID != "" {
+		// GitHub OAuth
 		s.mux.HandleFunc("GET /login", s.handleLoginPage)
 		s.mux.HandleFunc("GET /auth/github", s.handleGitHubAuth)
 		s.mux.HandleFunc("GET /auth/callback", s.handleGitHubCallback)
 		s.mux.HandleFunc("GET /auth/logout", s.handleLogout)
 		s.mux.Handle("GET /ui", s.withSessionAuth(http.HandlerFunc(s.handleUploadPage)))
-		s.mux.HandleFunc("GET /ui/preview", s.handleUploadPreview)
 	}
 }
 

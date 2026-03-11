@@ -42,6 +42,11 @@ func (s *Server) withAuth(next http.Handler) http.Handler {
 // withUploadAuth accepts either API key or valid session cookie.
 func (s *Server) withUploadAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Auth disabled: allow all
+		if s.config.AuthDisabled {
+			next.ServeHTTP(w, r)
+			return
+		}
 		// Try API key first
 		apiKey := r.Header.Get("X-API-Key")
 		if apiKey != "" && subtle.ConstantTimeCompare([]byte(apiKey), []byte(s.config.APIKey)) == 1 {

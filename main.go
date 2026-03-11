@@ -30,7 +30,8 @@ func main() {
 		ListenAddr:         getEnv("IMAGE_HOSTING_LISTEN_ADDR", ":8080"),
 		GitHubClientID:     os.Getenv("GITHUB_CLIENT_ID"),
 		GitHubClientSecret: os.Getenv("GITHUB_CLIENT_SECRET"),
-		AllowedUsers:       allowedUsers,
+		GitHubAllowedUsers:       allowedUsers,
+		AuthDisabled:       os.Getenv("AUTH_DISABLED") == "true",
 	}
 
 	if cfg.APIKey == "" {
@@ -38,8 +39,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	if cfg.GitHubClientID != "" {
-		logger.Info("web UI enabled", "allowed_users", cfg.AllowedUsers)
+	if cfg.AuthDisabled {
+		logger.Warn("web UI enabled with auth DISABLED (development mode)")
+	} else if cfg.GitHubClientID != "" {
+		logger.Info("web UI enabled", "allowed_users", cfg.GitHubAllowedUsers)
 	}
 
 	if err := os.MkdirAll(cfg.UploadDir, 0755); err != nil {

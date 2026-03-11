@@ -43,7 +43,7 @@ When `GITHUB_CLIENT_ID` is set, a browser-based upload interface is available at
 1. Create a GitHub OAuth App at [github.com/settings/developers](https://github.com/settings/developers)
    - **Homepage URL**: `https://your-domain.com`
    - **Authorization callback URL**: `https://your-domain.com/auth/callback`
-2. Set `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, and `ALLOWED_USERS` environment variables
+2. Set `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, and `GITHUB_ALLOWED_USERS` environment variables
 3. Access `https://your-domain.com/login` in your browser
 
 ### Flow
@@ -121,7 +121,7 @@ docker run -d \
 | `LISTEN_ADDR` | Listen address | `:8080` | No |
 | `GITHUB_CLIENT_ID` | GitHub OAuth client ID | - | For Web UI |
 | `GITHUB_CLIENT_SECRET` | GitHub OAuth client secret | - | For Web UI |
-| `ALLOWED_USERS` | Comma-separated allowed GitHub usernames | - | For Web UI |
+| `GITHUB_ALLOWED_USERS` | Comma-separated allowed GitHub usernames | - | For Web UI |
 
 When `GITHUB_CLIENT_ID` is not set, the server runs in API-only mode (no UI routes registered).
 
