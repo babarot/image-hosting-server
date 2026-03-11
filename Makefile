@@ -1,0 +1,9 @@
+.PHONY: dev
+
+dev:
+	@echo "http://localhost:9997/ui"
+	AUTH_DISABLED=true \
+	IMAGE_HOSTING_API_KEY=test \
+	IMAGE_HOSTING_UPLOAD_DIR=/tmp/test \
+	IMAGE_HOSTING_LISTEN_ADDR=:9997 \
+	go run .

@@ -118,6 +118,46 @@
     text-align: center;
     box-sizing: border-box;
   }
+  .copy-format-bar {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    margin-top: calc(var(--global-space) * 2);
+    font-size: calc(var(--global-font-size) - 2px);
+  }
+  .copy-format-bar.visible {
+    display: flex;
+  }
+  .copy-format-bar label {
+    color: var(--secondary-color);
+    white-space: nowrap;
+  }
+  .copy-format-bar .fmt-options {
+    display: flex;
+    gap: 0;
+  }
+  .copy-format-bar .fmt-btn {
+    background: none;
+    color: var(--secondary-color);
+    border: 1px solid var(--secondary-color);
+    padding: 2px 10px;
+    font-size: calc(var(--global-font-size) - 2px);
+    font-family: inherit;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    margin-left: -1px;
+  }
+  .copy-format-bar .fmt-btn:first-child {
+    margin-left: 0;
+  }
+  .copy-format-bar .fmt-btn:hover {
+    color: var(--font-color);
+    border-color: var(--font-color);
+  }
+  .copy-format-bar .fmt-btn.active {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+  }
   .results table td a {
     word-break: break-all;
   }
@@ -189,6 +229,15 @@
     <p class="hint">or click to select &middot; max 20 MB</p>
   </div>
   <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.avif,.ico,.pdf">
+  <div class="copy-format-bar" id="copyFormatBar">
+    <label>copy as:</label>
+    <div class="fmt-options">
+      <button class="fmt-btn active" data-fmt="plain">plain</button>
+      <button class="fmt-btn" data-fmt="markdown">markdown</button>
+      <button class="fmt-btn" data-fmt="img">img tag</button>
+      <button class="fmt-btn" data-fmt="picture">picture tag</button>
+    </div>
+  </div>
   <div class="results" id="results"></div>
 </div>
 <script>
@@ -201,6 +250,16 @@
   const dropZone = document.getElementById('dropZone');
   const fileInput = document.getElementById('fileInput');
   const results = document.getElementById('results');
+  const copyFormatBar = document.getElementById('copyFormatBar');
+  let copyFormat = 'plain';
+
+  copyFormatBar.addEventListener('click', (e) => {
+    const btn = e.target.closest('.fmt-btn');
+    if (!btn) return;
+    copyFormatBar.querySelector('.fmt-btn.active').classList.remove('active');
+    btn.classList.add('active');
+    copyFormat = btn.dataset.fmt;
+  });
 
   dropZone.addEventListener('click', () => fileInput.click());
   dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
@@ -216,6 +275,7 @@
       const tbody = document.createElement('tbody');
       table.appendChild(tbody);
       results.appendChild(table);
+      copyFormatBar.classList.add('visible');
     }
     return table.querySelector('tbody');
   }
@@ -250,7 +310,7 @@
             <div class="meta">${esc(d.filename)} &middot; ${fmtSize(d.size)}</div>
           </td>
           <td class="actions">
-            <button class="btn btn-primary btn-small" onclick="copyURL(this,'${esc(d.url)}')">copy</button>
+            <button class="btn btn-primary btn-small" onclick="copyFmt(this,'${esc(d.url)}','${esc(d.filename)}')">copy</button>
           </td>`;
       } else {
         let msg = 'Upload failed';
@@ -267,8 +327,25 @@
     xhr.send(fd);
   }
 
-  window.copyURL = function(btn, url) {
-    navigator.clipboard.writeText(url).then(() => {
+  window.copyFmt = function(btn, url, filename) {
+    const fmt = copyFormat;
+    const name = filename.replace(/\.[^.]+$/, '');
+    let text;
+    switch (fmt) {
+      case 'plain':
+        text = url;
+        break;
+      case 'markdown':
+        text = `![${name}](${url})`;
+        break;
+      case 'img':
+        text = `<img src="${url}" alt="${name}">`;
+        break;
+      case 'picture':
+        text = `<picture>\n  <source media="(prefers-color-scheme: dark)" srcset="${url}">\n  <source media="(prefers-color-scheme: light)" srcset="${url}">\n  <img alt="${name}" src="${url}" width="250">\n</picture>`;
+        break;
+    }
+    navigator.clipboard.writeText(text).then(() => {
       btn.textContent = 'copied!';
       btn.classList.remove('btn-primary');
       btn.classList.add('copied');
