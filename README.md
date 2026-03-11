@@ -125,6 +125,14 @@ docker run -d \
 
 When `GITHUB_CLIENT_ID` is not set, the server runs in API-only mode (no UI routes registered).
 
+## Local Development
+
+```bash
+AUTH_DISABLED=true IMAGE_HOSTING_API_KEY=test IMAGE_HOSTING_UPLOAD_DIR=/tmp/test IMAGE_HOSTING_LISTEN_ADDR=:9997 go run .
+```
+
+Open http://localhost:9997/login — auth is skipped, upload UI is directly accessible.
+
 ## License
 
 MIT
