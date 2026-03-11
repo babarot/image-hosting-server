@@ -39,6 +39,39 @@ func (s *Server) withAuth(next http.Handler) http.Handler {
 	})
 }
 
+// withUploadAuth accepts either API key or valid session cookie.
+func (s *Server) withUploadAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Try API key first
+		apiKey := r.Header.Get("X-API-Key")
+		if apiKey != "" && subtle.ConstantTimeCompare([]byte(apiKey), []byte(s.config.APIKey)) == 1 {
+			next.ServeHTTP(w, r)
+			return
+		}
+		// Try session cookie
+		if cookie, err := r.Cookie("session_id"); err == nil {
+			if s.sessions.Get(cookie.Value) != nil {
+				next.ServeHTTP(w, r)
+				return
+			}
+		}
+		s.logger.Warn("auth: unauthorized upload attempt", "ip", clientIP(r))
+		writeError(w, http.StatusUnauthorized, "unauthorized")
+	})
+}
+
+// withSessionAuth requires a valid session cookie.
+func (s *Server) withSessionAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie("session_id")
+		if err != nil || s.sessions.Get(cookie.Value) == nil {
+			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 // withRateLimit enforces per-IP rate limiting using a token bucket algorithm.
 func (s *Server) withRateLimit(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
