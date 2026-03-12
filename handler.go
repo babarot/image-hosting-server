@@ -1,15 +1,22 @@
 package main
 
 import (
+	"bytes"
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"image"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	_ "golang.org/x/image/webp"
 )
 
 const maxUploadSize = 20 << 20 // 20MB
@@ -115,12 +122,17 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 		"duration", time.Since(start).String(),
 	)
 
-	writeJSON(w, http.StatusCreated, map[string]any{
+	resp := map[string]any{
 		"url":      url,
 		"path":     relativePath,
 		"size":     len(data),
 		"filename": filename,
-	})
+	}
+	if cfg, _, err := image.DecodeConfig(bytes.NewReader(data)); err == nil {
+		resp["width"] = cfg.Width
+		resp["height"] = cfg.Height
+	}
+	writeJSON(w, http.StatusCreated, resp)
 }
 
 func (s *Server) handleDelete(w http.ResponseWriter, r *http.Request) {

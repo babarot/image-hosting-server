@@ -7,7 +7,6 @@
 <title>Upload - Image Hosting</title>
 <link rel="stylesheet" href="https://unpkg.com/terminal.css@0.7.4/dist/terminal.min.css">
 <style>
-  /* Dark mode (default for this app) */
   :root {
     --background-color: #222225;
     --font-color: #e8e9ed;
@@ -16,6 +15,7 @@
     --invert-font-color: #222225;
     --code-bg-color: #2a2a2d;
     --error-color: #e24b4b;
+    --sp: var(--global-space);
   }
   @media (prefers-color-scheme: light) {
     :root {
@@ -28,23 +28,27 @@
       --error-color: #d20962;
     }
   }
+
+  /* ---- Layout ---- */
   body { margin: 0; }
   .page {
     max-width: 682px;
     margin: 0 auto;
-    padding: calc(var(--global-space) * 2) var(--global-space);
+    padding: calc(var(--sp) * 2) var(--sp);
   }
   .page > header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--global-space);
-    margin-bottom: calc(var(--global-space) * 2);
+    gap: var(--sp);
+    margin-bottom: calc(var(--sp) * 2);
   }
+
+  /* ---- User ---- */
   .user {
     display: flex;
     align-items: center;
-    gap: var(--global-space);
+    gap: var(--sp);
     min-width: 0;
   }
   .user img {
@@ -59,9 +63,25 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+
+  /* ---- Logout ---- */
+  .logout-btn {
+    color: var(--secondary-color);
+    font-size: calc(var(--global-font-size) - 2px);
+    text-decoration: none;
+    border: 1px solid var(--secondary-color);
+    padding: 2px 10px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .logout-btn:hover {
+    color: var(--font-color);
+    border-color: var(--font-color);
+  }
+
+  /* ---- Drop zone ---- */
   .drop-zone {
     border: 2px dashed var(--secondary-color);
-    padding: calc(var(--global-space) * 4) calc(var(--global-space) * 2);
+    padding: calc(var(--sp) * 4) calc(var(--sp) * 2);
     text-align: center;
     cursor: pointer;
     transition: border-color 0.2s, background 0.2s;
@@ -70,25 +90,18 @@
   }
   @media (min-width: 480px) {
     .drop-zone {
-      padding: calc(var(--global-space) * 6) calc(var(--global-space) * 2);
+      padding: calc(var(--sp) * 8) calc(var(--sp) * 2);
     }
   }
-  .drop-zone:hover {
-    border-color: var(--primary-color);
-  }
+  .drop-zone:hover { border-color: var(--primary-color); }
   .drop-zone.dragover {
     border-color: var(--primary-color);
     background: rgba(232,176,4,0.05);
   }
   @media (prefers-color-scheme: light) {
-    .drop-zone.dragover {
-      background: rgba(201,136,11,0.05);
-    }
+    .drop-zone.dragover { background: rgba(201,136,11,0.05); }
   }
-  .drop-zone.uploading {
-    pointer-events: none;
-    opacity: 0.5;
-  }
+  .drop-zone.uploading { pointer-events: none; opacity: 0.5; }
   .drop-zone p { margin: 0; }
   .drop-zone .hint {
     color: var(--secondary-color);
@@ -96,86 +109,150 @@
   }
   input[type="file"] { display: none; }
 
-  .results {
-    margin-top: calc(var(--global-space) * 2);
-  }
-  .results table {
-    width: 100%;
-    margin-bottom: 0;
-  }
-  .results table td {
-    vertical-align: middle;
-    font-size: calc(var(--global-font-size) - 1px);
-    padding: var(--global-space);
-  }
-  .results table td.actions {
-    width: 80px;
-    text-align: right;
-    white-space: nowrap;
-  }
-  .results table td.actions .btn {
-    width: 76px;
-    text-align: center;
-    box-sizing: border-box;
-  }
-  .copy-format-bar {
+  /* ---- Toolbar ---- */
+  .toolbar {
     display: none;
     align-items: center;
-    gap: 8px;
-    margin-top: calc(var(--global-space) * 2);
-    font-size: calc(var(--global-font-size) - 2px);
+    gap: 0;
+    margin-top: calc(var(--sp) * 2);
+    padding-bottom: calc(var(--sp) * 1);
+    border-bottom: 1px solid var(--secondary-color);
   }
-  .copy-format-bar.visible {
-    display: flex;
-  }
-  .copy-format-bar label {
-    color: var(--secondary-color);
-    white-space: nowrap;
-  }
-  .copy-format-bar .fmt-options {
+  .toolbar.visible { display: flex; }
+
+  /* Format tabs — terminal underline style */
+  .fmt-options {
     display: flex;
     gap: 0;
   }
-  .copy-format-bar .fmt-btn {
+  .fmt-btn {
     background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
     color: var(--secondary-color);
-    border: 1px solid var(--secondary-color);
-    padding: 2px 10px;
+    padding: 4px 10px 6px;
+    margin-bottom: -1px;
     font-size: calc(var(--global-font-size) - 2px);
     font-family: inherit;
     cursor: pointer;
     transition: color 0.15s, border-color 0.15s;
-    margin-left: -1px;
+    white-space: nowrap;
+    line-height: 1.4;
   }
-  .copy-format-bar .fmt-btn:first-child {
-    margin-left: 0;
+  .fmt-btn:hover {
+    color: var(--font-color);
   }
-  .copy-format-bar .fmt-btn:hover {
+  .fmt-btn.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+  }
+
+  /* Copy all button — below results */
+  .copy-all-btn {
+    display: none;
+    float: right;
+    background: none;
+    border: 1px solid var(--secondary-color);
+    color: var(--secondary-color);
+    font-size: calc(var(--global-font-size) - 2px);
+    font-family: inherit;
+    cursor: pointer;
+    padding: 3px 0;
+    width: 80px;
+    text-align: center;
+    margin-top: calc(var(--sp) * 2);
+    line-height: 1.4;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .copy-all-btn:hover {
     color: var(--font-color);
     border-color: var(--font-color);
   }
-  .copy-format-bar .fmt-btn.active {
+  .copy-all-btn.copied {
     color: var(--primary-color);
     border-color: var(--primary-color);
   }
-  .results table td a {
-    word-break: break-all;
+
+  /* ---- Result list ---- */
+  .results { margin-top: 0; }
+  .result-card {
+    display: flex;
+    align-items: center;
+    gap: var(--sp);
+    padding: var(--sp) 0;
+    border-bottom: 1px solid var(--code-bg-color);
+    animation: fadeIn 0.3s ease;
   }
-  .meta {
+  .result-thumb {
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+    border: 1px solid var(--code-bg-color);
+    flex-shrink: 0;
+  }
+  .result-card .result-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .result-card .result-url {
+    font-size: calc(var(--global-font-size) - 1px);
+    word-break: break-all;
+    line-height: 1.4;
+  }
+  .result-card .result-meta {
     color: var(--secondary-color);
     font-size: calc(var(--global-font-size) - 3px);
+    margin-top: 2px;
   }
-  .error-text {
-    color: var(--error-color);
+  .result-card .result-preview {
+    color: var(--secondary-color);
+    font-size: calc(var(--global-font-size) - 3px);
+    margin-top: 4px;
+    padding: 3px 6px;
+    background: var(--code-bg-color);
+    border-left: 2px solid var(--primary-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  .btn.copied {
+
+  /* Copy button — fixed width to prevent layout shift */
+  .copy-card-btn {
+    flex-shrink: 0;
+    background: none;
+    border: 1px solid var(--secondary-color);
+    color: var(--secondary-color);
+    padding: 3px 0;
+    width: 80px;
+    text-align: center;
+    font-size: calc(var(--global-font-size) - 2px);
+    font-family: inherit;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+    line-height: 1.4;
+  }
+  .copy-card-btn:hover {
     color: var(--font-color);
     border-color: var(--font-color);
   }
+  .copy-card-btn.copied {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+  }
+
+  /* Upload-in-progress */
+  .result-card.uploading-card {
+    opacity: 0.6;
+  }
+
+  .error-text { color: var(--error-color); }
+
+  /* ---- Progress ---- */
   .progress-wrap {
-    height: 3px;
+    height: 2px;
     background: var(--code-bg-color);
-    margin-top: 4px;
+    margin-top: 6px;
     overflow: hidden;
   }
   .progress-bar {
@@ -183,33 +260,29 @@
     background: var(--primary-color);
     transition: width 0.2s;
   }
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  .results table tr { animation: fadeIn 0.3s ease; }
 
-  /* Mobile: stack table cells vertically */
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  /* ---- Mobile ---- */
   @media (max-width: 479px) {
-    .results table,
-    .results table tbody,
-    .results table tr,
-    .results table td {
-      display: block;
+    .toolbar { flex-wrap: wrap; gap: 6px; }
+    .fmt-options { width: 100%; }
+    .fmt-btn { flex: 1; padding: 4px 6px 6px; font-size: calc(var(--global-font-size) - 3px); text-align: center; }
+    .result-card { flex-wrap: wrap; }
+    .result-thumb { display: none; }
+    .copy-card-btn { width: 100%; text-align: center; }
+    .copy-all-btn {
+      float: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
       width: 100%;
-    }
-    .results table tr {
-      border-bottom: 1px solid var(--secondary-color);
-      padding: var(--global-space) 0;
-    }
-    .results table td {
-      padding: 2px var(--global-space);
+      text-align: center;
+      margin: 0;
+      padding: 12px 10px;
       border: none;
-    }
-    .results table td.actions {
-      width: auto;
-      text-align: left;
-      padding-top: 4px;
+      border-top: 1px solid var(--secondary-color);
+      background: var(--background-color);
+      z-index: 10;
     }
   }
 </style>
@@ -221,7 +294,7 @@
       <img id="avatar" src="" alt="">
       <span class="terminal-prompt" id="username"></span>
     </div>
-    <a href="/auth/logout" class="btn btn-default btn-ghost">logout</a>
+    <a href="/auth/logout" class="logout-btn">logout</a>
   </header>
   <hr>
   <div class="drop-zone" id="dropZone">
@@ -229,36 +302,45 @@
     <p class="hint">or click to select &middot; max 20 MB</p>
   </div>
   <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.avif,.ico,.pdf">
-  <div class="copy-format-bar" id="copyFormatBar">
-    <label>copy as:</label>
+  <div class="toolbar" id="toolbar">
     <div class="fmt-options">
       <button class="fmt-btn active" data-fmt="plain">plain</button>
       <button class="fmt-btn" data-fmt="markdown">markdown</button>
-      <button class="fmt-btn" data-fmt="img">img tag</button>
-      <button class="fmt-btn" data-fmt="picture">picture tag</button>
+      <button class="fmt-btn" data-fmt="img">img</button>
+      <button class="fmt-btn" data-fmt="picture">picture</button>
     </div>
   </div>
   <div class="results" id="results"></div>
+  <button class="copy-all-btn" id="copyAllBtn" style="display:none;">copy all</button>
 </div>
 <script>
 (function() {
   const username = "{{.Username}}";
   const avatarURL = "{{.AvatarURL}}";
   document.getElementById('username').textContent = username;
-  document.getElementById('avatar').src = avatarURL;
+  const avatarEl = document.getElementById('avatar');
+  if (avatarURL) {
+    avatarEl.src = avatarURL;
+    avatarEl.onerror = () => { avatarEl.style.display = 'none'; };
+  } else {
+    avatarEl.style.display = 'none';
+  }
 
   const dropZone = document.getElementById('dropZone');
   const fileInput = document.getElementById('fileInput');
   const results = document.getElementById('results');
-  const copyFormatBar = document.getElementById('copyFormatBar');
+  const toolbar = document.getElementById('toolbar');
+  const copyAllBtn = document.getElementById('copyAllBtn');
   let copyFormat = 'plain';
+  const uploadedFiles = [];
 
-  copyFormatBar.addEventListener('click', (e) => {
+  toolbar.addEventListener('click', (e) => {
     const btn = e.target.closest('.fmt-btn');
     if (!btn) return;
-    copyFormatBar.querySelector('.fmt-btn.active').classList.remove('active');
+    toolbar.querySelector('.fmt-btn.active').classList.remove('active');
     btn.classList.add('active');
     copyFormat = btn.dataset.fmt;
+    updatePreviews();
   });
 
   dropZone.addEventListener('click', () => fileInput.click());
@@ -268,34 +350,26 @@
   fileInput.addEventListener('change', () => { handleFiles(fileInput.files); fileInput.value = ''; });
   document.addEventListener('paste', (e) => { if (e.clipboardData.files.length > 0) { e.preventDefault(); handleFiles(e.clipboardData.files); } });
 
-  function ensureTable() {
-    let table = results.querySelector('table');
-    if (!table) {
-      table = document.createElement('table');
-      const tbody = document.createElement('tbody');
-      table.appendChild(tbody);
-      results.appendChild(table);
-      copyFormatBar.classList.add('visible');
-    }
-    return table.querySelector('tbody');
-  }
+  const copyLabel = 'copy';
+  const copiedLabel = 'copied!';
 
   function handleFiles(files) { for (const file of files) uploadFile(file); }
 
   function uploadFile(file) {
-    const tbody = ensureTable();
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td colspan="2">
-        <div>${esc(file.name)} <span class="meta">${fmtSize(file.size)}</span></div>
+    toolbar.classList.add('visible');
+    const card = document.createElement('div');
+    card.className = 'result-card uploading-card';
+    card.innerHTML = `
+      <div class="result-info">
+        <div class="result-meta">${esc(file.name)} &middot; ${fmtSize(file.size)}</div>
         <div class="progress-wrap"><div class="progress-bar" style="width:0%"></div></div>
-      </td>`;
-    tbody.insertBefore(tr, tbody.firstChild);
+      </div>`;
+    results.insertBefore(card, results.firstChild);
 
     const fd = new FormData();
     fd.append('file', file);
     const xhr = new XMLHttpRequest();
-    const bar = tr.querySelector('.progress-bar');
+    const bar = card.querySelector('.progress-bar');
 
     xhr.upload.addEventListener('progress', (e) => {
       if (e.lengthComputable) bar.style.width = (e.loaded / e.total * 100) + '%';
@@ -304,54 +378,66 @@
     xhr.addEventListener('load', () => {
       if (xhr.status === 201) {
         const d = JSON.parse(xhr.responseText);
-        tr.innerHTML = `
-          <td>
-            <a href="${esc(d.url)}" target="_blank">${esc(d.url)}</a>
-            <div class="meta">${esc(d.filename)} &middot; ${fmtSize(d.size)}</div>
-          </td>
-          <td class="actions">
-            <button class="btn btn-primary btn-small" onclick="copyFmt(this,'${esc(d.url)}','${esc(d.filename)}')">copy</button>
-          </td>`;
+        uploadedFiles.push({ url: d.url, filename: d.filename });
+        if (uploadedFiles.length >= 2) copyAllBtn.style.display = 'block';
+        card.className = 'result-card';
+        const isImage = /\.(jpe?g|png|gif|webp|svg|avif|ico)$/i.test(d.filename);
+        card.innerHTML = `
+          ${isImage ? `<img class="result-thumb" src="${esc(d.url)}" alt="">` : ''}
+          <div class="result-info">
+            <div class="result-url"><a href="${esc(d.url)}" target="_blank">${esc(d.url)}</a></div>
+            <div class="result-meta">${esc(d.filename)}${d.width && d.height ? ' &middot; ' + d.width + ' &times; ' + d.height : ''} &middot; ${fmtSize(d.size)}</div>
+            <div class="result-preview" data-url="${esc(d.url)}" data-filename="${esc(d.filename)}">${esc(formatText(d.url, d.filename))}</div>
+          </div>
+          <button class="copy-card-btn" onclick="copyFmt(this,'${esc(d.url)}','${esc(d.filename)}')">${copyLabel}</button>`;
       } else {
         let msg = 'Upload failed';
         try { msg = JSON.parse(xhr.responseText).error; } catch(e) {}
-        tr.innerHTML = `<td colspan="2"><span class="error-text">${esc(file.name)}: ${esc(msg)}</span></td>`;
+        card.className = 'result-card';
+        card.innerHTML = `<div class="result-info"><span class="error-text">${esc(file.name)}: ${esc(msg)}</span></div>`;
       }
     });
 
     xhr.addEventListener('error', () => {
-      tr.innerHTML = `<td colspan="2"><span class="error-text">${esc(file.name)}: Network error</span></td>`;
+      card.className = 'result-card';
+      card.innerHTML = `<div class="result-info"><span class="error-text">${esc(file.name)}: Network error</span></div>`;
     });
 
     xhr.open('POST', '/api/upload');
     xhr.send(fd);
   }
 
-  window.copyFmt = function(btn, url, filename) {
-    const fmt = copyFormat;
+  function formatText(url, filename) {
     const name = filename.replace(/\.[^.]+$/, '');
-    let text;
-    switch (fmt) {
-      case 'plain':
-        text = url;
-        break;
-      case 'markdown':
-        text = `![${name}](${url})`;
-        break;
-      case 'img':
-        text = `<img src="${url}" alt="${name}">`;
-        break;
-      case 'picture':
-        text = `<picture>\n  <source media="(prefers-color-scheme: dark)" srcset="${url}">\n  <source media="(prefers-color-scheme: light)" srcset="${url}">\n  <img alt="${name}" src="${url}" width="250">\n</picture>`;
-        break;
+    switch (copyFormat) {
+      case 'plain':    return url;
+      case 'markdown': return `![${name}](${url})`;
+      case 'img':      return `<img src="${url}" alt="${name}">`;
+      case 'picture':  return `<picture>\n  <source media="(prefers-color-scheme: dark)" srcset="${url}">\n  <source media="(prefers-color-scheme: light)" srcset="${url}">\n  <img alt="${name}" src="${url}" width="250">\n</picture>`;
     }
-    navigator.clipboard.writeText(text).then(() => {
-      btn.textContent = 'copied!';
-      btn.classList.remove('btn-primary');
-      btn.classList.add('copied');
-      setTimeout(() => { btn.textContent = 'copy'; btn.classList.add('btn-primary'); btn.classList.remove('copied'); }, 2000);
+  }
+
+  function updatePreviews() {
+    results.querySelectorAll('.result-preview').forEach(el => {
+      el.textContent = formatText(el.dataset.url, el.dataset.filename);
     });
+  }
+
+  function flashCopied(btn) {
+    const orig = btn.textContent;
+    btn.textContent = 'copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
+  }
+
+  window.copyFmt = function(btn, url, filename) {
+    navigator.clipboard.writeText(formatText(url, filename)).then(() => flashCopied(btn));
   };
+
+  copyAllBtn.addEventListener('click', () => {
+    const text = uploadedFiles.map(f => formatText(f.url, f.filename)).join('\n');
+    navigator.clipboard.writeText(text).then(() => flashCopied(copyAllBtn));
+  });
 
   function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
   function fmtSize(b) { if (b < 1024) return b + ' B'; if (b < 1048576) return (b/1024).toFixed(1) + ' KB'; return (b/1048576).toFixed(1) + ' MB'; }
