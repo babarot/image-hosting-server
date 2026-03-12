@@ -51,14 +51,17 @@ When `GITHUB_CLIENT_ID` is set, a browser-based upload interface is available at
 1. Click "Sign in with GitHub" on the login page
 2. Authorize the OAuth App on GitHub
 3. Drag & drop files (or click / paste) on the upload page
-4. Copy the returned URL with the copy button
+4. Select a copy format (plain / markdown / img tag / picture tag)
+5. Copy the returned URL with the copy button
 
 ### Features
 
 - Drag & drop, click to select, and clipboard paste (`Cmd+V`)
 - Upload progress bar
-- One-click URL copy
-- Thumbnail preview for image files
+- Copy format selector (plain URL, Markdown, `<img>`, `<picture>`)
+- Inline copy preview that updates on format switch
+- Image thumbnail preview (desktop)
+- Image dimensions and file size in upload results
 - Dark / light mode (follows OS preference, styled with [terminal.css](https://terminalcss.xyz/))
 - Mobile responsive
 
@@ -77,8 +80,8 @@ When `GITHUB_CLIENT_ID` is set, a browser-based upload interface is available at
 | `DELETE` | `/api/delete/{path}` | API Key | Delete a file |
 | `GET` | `/api/health` | - | Health check |
 | `GET` | `/files/{path}` | - | Serve static files (public) |
-| `GET` | `/login` | - | Login page (OAuth enabled only) |
-| `GET` | `/ui` | Session | Upload UI (OAuth enabled only) |
+| `GET` | `/login` | - | Login page |
+| `GET` | `/ui` | Session | Upload UI |
 
 ### Upload
 
@@ -88,10 +91,24 @@ curl -X POST https://example.com/api/upload \
   -F "file=@image.png"
 ```
 
+Response:
+
+```json
+{
+  "url": "https://example.com/files/2026/03/abcdef0123456789.png",
+  "path": "2026/03/abcdef0123456789.png",
+  "filename": "abcdef0123456789.png",
+  "size": 123456,
+  "width": 1200,
+  "height": 800
+}
+```
+
 - Filename is replaced with a 16-char hex random value
 - Subdirectory defaults to `YYYY/MM`
 - Allowed formats: jpg, png, gif, webp, svg, avif, ico, pdf
 - Max size: 20MB
+- `width` and `height` are included for image files (not PDF)
 
 ## Docker
 
@@ -101,12 +118,12 @@ docker pull ghcr.io/babarot/image-hosting-server:latest
 
 ```bash
 docker run -d \
-  -e API_KEY=your-secret-key \
-  -e BASE_URL=https://example.com \
+  -e IMAGE_HOSTING_API_KEY=your-secret-key \
+  -e IMAGE_HOSTING_BASE_URL=https://example.com \
   -e GITHUB_CLIENT_ID=your-client-id \
   -e GITHUB_CLIENT_SECRET=your-client-secret \
-  -e ALLOWED_USERS=your-github-username \
-  -v /path/to/files:/data/files \
+  -e GITHUB_ALLOWED_USERS=your-github-username \
+  -v /path/to/files:/data/images \
   -p 8080:8080 \
   ghcr.io/babarot/image-hosting-server:latest
 ```
@@ -115,23 +132,37 @@ docker run -d \
 
 | Variable | Description | Default | Required |
 |---|---|---|---|
-| `API_KEY` | API auth key | - | Yes |
-| `BASE_URL` | Public URL base | `http://localhost:8080` | No |
-| `UPLOAD_DIR` | File storage path | `/data/images` | No |
-| `LISTEN_ADDR` | Listen address | `:8080` | No |
+| `IMAGE_HOSTING_API_KEY` | API auth key | - | Yes |
+| `IMAGE_HOSTING_BASE_URL` | Public URL base | `http://localhost:8080` | No |
+| `IMAGE_HOSTING_UPLOAD_DIR` | File storage path | `/data/images` | No |
+| `IMAGE_HOSTING_LISTEN_ADDR` | Listen address | `:8080` | No |
 | `GITHUB_CLIENT_ID` | GitHub OAuth client ID | - | For Web UI |
 | `GITHUB_CLIENT_SECRET` | GitHub OAuth client secret | - | For Web UI |
 | `GITHUB_ALLOWED_USERS` | Comma-separated allowed GitHub usernames | - | For Web UI |
+| `AUTH_DISABLED` | Skip auth for Web UI (`true` to enable) | - | No |
 
-When `GITHUB_CLIENT_ID` is not set, the server runs in API-only mode (no UI routes registered).
+When `GITHUB_CLIENT_ID` is not set and `AUTH_DISABLED` is not `true`, the server runs in API-only mode (no UI routes registered).
 
 ## Local Development
 
 ```bash
-AUTH_DISABLED=true IMAGE_HOSTING_API_KEY=test IMAGE_HOSTING_UPLOAD_DIR=/tmp/test IMAGE_HOSTING_LISTEN_ADDR=:9997 go run .
+make dev
 ```
 
-Open http://localhost:9997/login — auth is skipped, upload UI is directly accessible.
+This uses [air](https://github.com/air-verse/air) for hot-reload. Config is in `.air.toml`, env vars in `.env.dev`.
+
+Or run manually:
+
+```bash
+AUTH_DISABLED=true \
+IMAGE_HOSTING_API_KEY=test \
+IMAGE_HOSTING_UPLOAD_DIR=/tmp/test \
+IMAGE_HOSTING_LISTEN_ADDR=:9997 \
+IMAGE_HOSTING_BASE_URL=http://localhost:9997 \
+go run .
+```
+
+Open http://localhost:9997/ui — auth is skipped, upload UI is directly accessible.
 
 ## License
 
