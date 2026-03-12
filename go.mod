@@ -4,4 +4,4 @@ go 1.25.0
 
 require golang.org/x/time v0.9.0
 
-require golang.org/x/image v0.37.0 // indirect
+require golang.org/x/image v0.37.0
