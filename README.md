@@ -30,8 +30,8 @@ When `GITHUB_CLIENT_ID` is set, a browser-based upload interface is available at
 </td>
 <td>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://assets.babarot.dev/files/2026/03/0f7e6b1f28e1855b.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://assets.babarot.dev/files/2026/03/da9000f81ff6a286.png">
+    <source media="(prefers-color-scheme: dark)" srcset="https://assets.babarot.dev/files/2026/03/edfbe495665d7a5c.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://assets.babarot.dev/files/2026/03/f52ba81c079d1140.png">
     <img alt="/ui" src="https://assets.babarot.dev/files/2026/03/da9000f81ff6a286.png" width="250">
   </picture>
 </td>
