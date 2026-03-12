@@ -17,21 +17,22 @@ Lightweight Go image hosting server with API key auth, rate limiting, and immuta
 
 When `GITHUB_CLIENT_ID` is set, a browser-based upload interface is available at `/login`.
 
+
 <table>
 <tr><th>/login</th><th>/ui</th></tr>
 <tr>
 <td>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://assets.babarot.dev/files/2026/03/5e40fe943323e228.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://assets.babarot.dev/files/2026/03/1d710f0e2d7da0e5.png">
-    <img alt="Login" src="https://assets.babarot.dev/files/2026/03/5e40fe943323e228.png" width="250">
+    <source media="(prefers-color-scheme: dark)" srcset="https://assets.babarot.dev/files/2026/03/69e44a34f3e75a5b.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://assets.babarot.dev/files/2026/03/23cc4d37f2820354.png">
+    <img alt="/login" src="https://assets.babarot.dev/files/2026/03/23cc4d37f2820354.png" width="250">
   </picture>
 </td>
 <td>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://assets.babarot.dev/files/2026/03/336d091b960cb596.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://assets.babarot.dev/files/2026/03/8d91995749d59b36.png">
-    <img alt="Upload UI" src="https://assets.babarot.dev/files/2026/03/8d91995749d59b36.png" width="250">
+    <source media="(prefers-color-scheme: dark)" srcset="https://assets.babarot.dev/files/2026/03/0f7e6b1f28e1855b.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://assets.babarot.dev/files/2026/03/da9000f81ff6a286.png">
+    <img alt="/ui" src="https://assets.babarot.dev/files/2026/03/da9000f81ff6a286.png" width="250">
   </picture>
 </td>
 </tr>
