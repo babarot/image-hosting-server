@@ -75,7 +75,12 @@ func main() {
 		}
 	}()
 
-	logger.Info("starting server", "addr", cfg.ListenAddr, "upload_dir", cfg.UploadDir)
+	addr := cfg.ListenAddr
+	if strings.HasPrefix(addr, ":") {
+		addr = "localhost" + addr
+	}
+	baseURL := "http://" + addr
+	logger.Info("starting server", "url", baseURL, "login", baseURL+"/login", "upload_dir", cfg.UploadDir)
 	if err := httpServer.ListenAndServe(); err != http.ErrServerClosed {
 		logger.Error("server error", "error", err)
 		os.Exit(1)

@@ -1,6 +1,6 @@
 root = "."
 tmp_dir = "tmp"
-env_files = [".env.dev"]
+env_files = []
 
 [build]
   cmd = "go build -o ./tmp/main ."
