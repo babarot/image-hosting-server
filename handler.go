@@ -42,7 +42,7 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 
 	r.Body = http.MaxBytesReader(w, r.Body, maxUploadSize+(1<<20))
 	if err := r.ParseMultipartForm(maxUploadSize); err != nil {
-		s.logger.Warn("upload: parse form error", "error", err, "ip", clientIP(r))
+		s.logger.Warn("upload: parse form error", "error", err, "ip", s.clientIP(r))
 		writeError(w, http.StatusRequestEntityTooLarge, "file too large (max 20MB)")
 		return
 	}
@@ -116,7 +116,7 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 	url := s.config.BaseURL + "/files/" + relativePath
 
 	s.logger.Info("upload: success",
-		"ip", clientIP(r),
+		"ip", s.clientIP(r),
 		"path", relativePath,
 		"size", len(data),
 		"duration", time.Since(start).String(),
@@ -159,7 +159,7 @@ func (s *Server) handleDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.logger.Info("delete: success", "ip", clientIP(r), "path", pathParam)
+	s.logger.Info("delete: success", "ip", s.clientIP(r), "path", pathParam)
 	writeJSON(w, http.StatusOK, map[string]string{"deleted": pathParam})
 }
 
