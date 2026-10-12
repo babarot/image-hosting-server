@@ -185,8 +185,14 @@ func (s *Server) handleFiles(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
 	w.Header().Set("Referrer-Policy", "no-referrer")
 	w.Header().Set("X-Robots-Tag", "noindex, nofollow")
+	// Uploaded files share the origin with the web UI, so never let them run
+	// scripts there (e.g. an SVG with <script> opened directly).
+	w.Header().Set("Content-Security-Policy", filesCSP)
+	w.Header().Set("X-Content-Type-Options", "nosniff")
 	http.ServeFile(w, r, fullPath)
 }
+
+const filesCSP = "default-src 'none'; img-src data:; style-src 'unsafe-inline'; sandbox"
 
 func (s *Server) safePath(p string) (string, error) {
 	if strings.Contains(p, "..") {

@@ -126,6 +126,12 @@ func TestServeFile(t *testing.T) {
 	if ct := w.Header().Get("Content-Type"); ct != "image/png" {
 		t.Fatalf("expected image/png, got %q", ct)
 	}
+	if csp := w.Header().Get("Content-Security-Policy"); csp != filesCSP {
+		t.Fatalf("expected CSP %q, got %q", filesCSP, csp)
+	}
+	if v := w.Header().Get("X-Content-Type-Options"); v != "nosniff" {
+		t.Fatalf("expected nosniff, got %q", v)
+	}
 }
 
 func TestServeFileNotFound(t *testing.T) {
