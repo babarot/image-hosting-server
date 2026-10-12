@@ -130,6 +130,8 @@ docker run -d \
   ghcr.io/babarot/image-hosting-server:latest
 ```
 
+The container runs as UID/GID `65532`, so the mounted directory must be writable by it. Either `chown -R 65532:65532 /path/to/files`, or run as the directory's owner with `--user <uid>:<gid>`.
+
 ## Environment Variables
 
 | Variable | Description | Default | Required |
