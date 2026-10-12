@@ -147,6 +147,19 @@
     border-bottom-color: var(--primary-color);
   }
 
+  /* Alt text source toggle */
+  .alt-options {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-left: auto;
+  }
+  .alt-label {
+    color: var(--secondary-color);
+    font-size: calc(var(--global-font-size) - 2px);
+    padding-right: 4px;
+  }
+
   /* Copy all button — below results */
   .copy-all-btn {
     display: none;
@@ -203,6 +216,9 @@
     color: var(--secondary-color);
     font-size: calc(var(--global-font-size) - 3px);
     margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .result-card .result-preview {
     color: var(--secondary-color);
@@ -267,6 +283,7 @@
     .toolbar { flex-wrap: wrap; gap: 6px; }
     .fmt-options { width: 100%; }
     .fmt-btn { flex: 1; padding: 4px 6px 6px; font-size: calc(var(--global-font-size) - 3px); text-align: center; }
+    .alt-options { margin-left: 0; }
     .result-card { flex-wrap: wrap; }
     .result-thumb { display: none; }
     .copy-card-btn { width: 100%; text-align: center; }
@@ -309,6 +326,11 @@
       <button class="fmt-btn" data-fmt="img">img</button>
       <button class="fmt-btn" data-fmt="picture">picture</button>
     </div>
+    <div class="alt-options">
+      <span class="alt-label">name:</span>
+      <button class="fmt-btn active" data-alt="original">original</button>
+      <button class="fmt-btn" data-alt="hash">hash</button>
+    </div>
   </div>
   <div class="results" id="results"></div>
   <button class="copy-all-btn" id="copyAllBtn" style="display:none;">copy all</button>
@@ -332,14 +354,22 @@
   const toolbar = document.getElementById('toolbar');
   const copyAllBtn = document.getElementById('copyAllBtn');
   let copyFormat = 'plain';
+  let altSource = 'original';
+  try { if (localStorage.getItem('altSource') === 'hash') altSource = 'hash'; } catch (e) {}
+  toolbar.querySelectorAll('[data-alt]').forEach(b => b.classList.toggle('active', b.dataset.alt === altSource));
   const uploadedFiles = [];
 
   toolbar.addEventListener('click', (e) => {
     const btn = e.target.closest('.fmt-btn');
     if (!btn) return;
-    toolbar.querySelector('.fmt-btn.active').classList.remove('active');
+    const group = btn.parentElement;
+    group.querySelector('.fmt-btn.active').classList.remove('active');
     btn.classList.add('active');
-    copyFormat = btn.dataset.fmt;
+    if (btn.dataset.fmt) copyFormat = btn.dataset.fmt;
+    if (btn.dataset.alt) {
+      altSource = btn.dataset.alt;
+      try { localStorage.setItem('altSource', altSource); } catch (e) {}
+    }
     updatePreviews();
   });
 
@@ -378,7 +408,8 @@
     xhr.addEventListener('load', () => {
       if (xhr.status === 201) {
         const d = JSON.parse(xhr.responseText);
-        uploadedFiles.push({ url: d.url, filename: d.filename });
+        const entry = { url: d.url, filename: d.filename, original: file.name };
+        uploadedFiles.push(entry);
         if (uploadedFiles.length >= 2) copyAllBtn.style.display = 'block';
         card.className = 'result-card';
         const isImage = /\.(jpe?g|png|gif|webp|svg|avif|ico)$/i.test(d.filename);
@@ -386,10 +417,16 @@
           ${isImage ? `<img class="result-thumb" src="${esc(d.url)}" alt="">` : ''}
           <div class="result-info">
             <div class="result-url"><a href="${esc(d.url)}" target="_blank">${esc(d.url)}</a></div>
-            <div class="result-meta">${esc(d.filename)}${d.width && d.height ? ' &middot; ' + d.width + ' &times; ' + d.height : ''} &middot; ${fmtSize(d.size)}</div>
-            <div class="result-preview" data-url="${esc(d.url)}" data-filename="${esc(d.filename)}">${esc(formatText(d.url, d.filename))}</div>
+            <div class="result-meta"><span class="result-name"></span>${d.width && d.height ? ' &middot; ' + d.width + ' &times; ' + d.height : ''} &middot; ${fmtSize(d.size)}</div>
+            <div class="result-preview"></div>
           </div>
-          <button class="copy-card-btn" onclick="copyFmt(this,'${esc(d.url)}','${esc(d.filename)}')">${copyLabel}</button>`;
+          <button class="copy-card-btn">${copyLabel}</button>`;
+        card.entry = entry;
+        renderCard(card);
+        const copyBtn = card.querySelector('.copy-card-btn');
+        copyBtn.addEventListener('click', () => {
+          navigator.clipboard.writeText(formatText(entry)).then(() => flashCopied(copyBtn));
+        });
       } else {
         let msg = 'Upload failed';
         try { msg = JSON.parse(xhr.responseText).error; } catch(e) {}
@@ -407,19 +444,29 @@
     xhr.send(fd);
   }
 
-  function formatText(url, filename) {
-    const name = filename.replace(/\.[^.]+$/, '');
+  function formatText({ url, filename, original }) {
+    const base = altSource === 'original' ? original : filename;
+    const name = base.replace(/\.[^.]+$/, '');
+    const mdAlt = name.replace(/[\\\[\]]/g, '\\$&');
+    const htmlAlt = name.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
     switch (copyFormat) {
       case 'plain':    return url;
-      case 'markdown': return `![${name}](${url})`;
-      case 'img':      return `<img src="${url}" alt="${name}">`;
-      case 'picture':  return `<picture>\n  <source media="(prefers-color-scheme: dark)" srcset="${url}">\n  <source media="(prefers-color-scheme: light)" srcset="${url}">\n  <img alt="${name}" src="${url}" width="250">\n</picture>`;
+      case 'markdown': return `![${mdAlt}](${url})`;
+      case 'img':      return `<img src="${url}" alt="${htmlAlt}">`;
+      case 'picture':  return `<picture>\n  <source media="(prefers-color-scheme: dark)" srcset="${url}">\n  <source media="(prefers-color-scheme: light)" srcset="${url}">\n  <img alt="${htmlAlt}" src="${url}" width="250">\n</picture>`;
     }
   }
 
+  function renderCard(card) {
+    const name = altSource === 'original' ? card.entry.original : card.entry.filename;
+    card.querySelector('.result-name').textContent = name;
+    card.querySelector('.result-meta').title = name;
+    card.querySelector('.result-preview').textContent = formatText(card.entry);
+  }
+
   function updatePreviews() {
-    results.querySelectorAll('.result-preview').forEach(el => {
-      el.textContent = formatText(el.dataset.url, el.dataset.filename);
+    results.querySelectorAll('.result-card').forEach(card => {
+      if (card.entry) renderCard(card);
     });
   }
 
@@ -430,12 +477,8 @@
     setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
   }
 
-  window.copyFmt = function(btn, url, filename) {
-    navigator.clipboard.writeText(formatText(url, filename)).then(() => flashCopied(btn));
-  };
-
   copyAllBtn.addEventListener('click', () => {
-    const text = uploadedFiles.map(f => formatText(f.url, f.filename)).join('\n');
+    const text = uploadedFiles.map(formatText).join('\n');
     navigator.clipboard.writeText(text).then(() => flashCopied(copyAllBtn));
   });
 
