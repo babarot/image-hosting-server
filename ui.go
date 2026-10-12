@@ -32,8 +32,7 @@ func (s *Server) handleLoginPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	loginTmpl.ExecuteTemplate(w, "login.html", nil)
+	s.renderTemplate(w, loginTmpl, "login.html", nil)
 }
 
 type uploadPageData struct {
@@ -44,8 +43,7 @@ type uploadPageData struct {
 func (s *Server) handleUploadPage(w http.ResponseWriter, r *http.Request) {
 	// Auth disabled: use placeholder user info
 	if s.config.AuthDisabled {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		uploadTmpl.ExecuteTemplate(w, "upload.html", uploadPageData{
+		s.renderTemplate(w, uploadTmpl, "upload.html", uploadPageData{
 			Username:  "local",
 			AvatarURL: "",
 		})
@@ -59,9 +57,15 @@ func (s *Server) handleUploadPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	uploadTmpl.ExecuteTemplate(w, "upload.html", uploadPageData{
+	s.renderTemplate(w, uploadTmpl, "upload.html", uploadPageData{
 		Username:  sess.Username,
 		AvatarURL: sess.AvatarURL,
 	})
+}
+
+func (s *Server) renderTemplate(w http.ResponseWriter, tmpl *template.Template, name string, data any) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := tmpl.ExecuteTemplate(w, name, data); err != nil {
+		s.logger.Error("render template failed", "template", name, "error", err)
+	}
 }
