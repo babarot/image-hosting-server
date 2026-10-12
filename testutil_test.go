@@ -8,6 +8,8 @@ import (
 	"io"
 	"log/slog"
 	"mime/multipart"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -48,9 +50,23 @@ func createMultipartFile(t *testing.T, filename string, content []byte) (*bytes.
 	if err != nil {
 		t.Fatal(err)
 	}
-	part.Write(content)
-	writer.Close()
+	if _, err := part.Write(content); err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
 	return body, writer.FormDataContentType()
+}
+
+func writeTestFile(t *testing.T, path string, data []byte) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, data, 0644); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func createTestPNG(t *testing.T) []byte {

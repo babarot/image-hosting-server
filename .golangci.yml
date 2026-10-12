@@ -1,0 +1,13 @@
+version: "2"
+
+linters:
+  settings:
+    errcheck:
+      # Errors from deferred cleanup are not actionable.
+      exclude-functions:
+        - (io.Closer).Close
+        - (*mime/multipart.Form).RemoveAll
+
+formatters:
+  enable:
+    - gofmt

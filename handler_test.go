@@ -23,7 +23,9 @@ func TestHealthEndpoint(t *testing.T) {
 	}
 
 	var resp map[string]string
-	json.NewDecoder(w.Body).Decode(&resp)
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatal(err)
+	}
 	if resp["status"] != "ok" {
 		t.Fatalf("expected status ok, got %q", resp["status"])
 	}
@@ -44,7 +46,9 @@ func TestUploadSuccess(t *testing.T) {
 	}
 
 	var resp map[string]any
-	json.NewDecoder(w.Body).Decode(&resp)
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatal(err)
+	}
 
 	if resp["url"] == nil || resp["url"].(string) == "" {
 		t.Fatal("expected url in response")
@@ -94,10 +98,19 @@ func TestUploadPathTraversal(t *testing.T) {
 	pngData := createTestPNG(t)
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
-	part, _ := writer.CreateFormFile("file", "test.png")
-	part.Write(pngData)
-	writer.WriteField("path", "../../etc")
-	writer.Close()
+	part, err := writer.CreateFormFile("file", "test.png")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := part.Write(pngData); err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.WriteField("path", "../../etc"); err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
 
 	req := httptest.NewRequest("POST", "/api/upload", body)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
@@ -112,9 +125,7 @@ func TestUploadPathTraversal(t *testing.T) {
 func TestServeFile(t *testing.T) {
 	srv := newTestServer(t)
 
-	subdir := filepath.Join(srv.config.UploadDir, "2026", "03")
-	os.MkdirAll(subdir, 0755)
-	os.WriteFile(filepath.Join(subdir, "test.png"), createTestPNG(t), 0644)
+	writeTestFile(t, filepath.Join(srv.config.UploadDir, "2026", "03", "test.png"), createTestPNG(t))
 
 	req := httptest.NewRequest("GET", "/files/2026/03/test.png", nil)
 	w := httptest.NewRecorder()
@@ -149,10 +160,8 @@ func TestServeFileNotFound(t *testing.T) {
 func TestDeleteFile(t *testing.T) {
 	srv := newTestServer(t)
 
-	subdir := filepath.Join(srv.config.UploadDir, "2026", "03")
-	os.MkdirAll(subdir, 0755)
-	filePath := filepath.Join(subdir, "delete-me.png")
-	os.WriteFile(filePath, createTestPNG(t), 0644)
+	filePath := filepath.Join(srv.config.UploadDir, "2026", "03", "delete-me.png")
+	writeTestFile(t, filePath, createTestPNG(t))
 
 	req := httptest.NewRequest("DELETE", "/api/delete/2026/03/delete-me.png", nil)
 	req.Header.Set("X-API-Key", "test-key")
