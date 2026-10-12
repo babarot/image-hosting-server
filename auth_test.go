@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 )
@@ -83,15 +84,56 @@ func TestLogout(t *testing.T) {
 	srv := newTestServerWithAuth(t)
 	sessionID := srv.sessions.Create("alice", "", 1*time.Hour)
 
+	req := httptest.NewRequest("POST", "/auth/logout", nil)
+	req.AddCookie(&http.Cookie{Name: "session_id", Value: sessionID})
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+
+	if w.Code != http.StatusSeeOther {
+		t.Fatalf("expected 303, got %d", w.Code)
+	}
+	if sess := srv.sessions.Get(sessionID); sess != nil {
+		t.Fatal("session should have been deleted")
+	}
+}
+
+func TestLogoutRejectsGET(t *testing.T) {
+	srv := newTestServerWithAuth(t)
+	sessionID := srv.sessions.Create("alice", "", 1*time.Hour)
+
 	req := httptest.NewRequest("GET", "/auth/logout", nil)
 	req.AddCookie(&http.Cookie{Name: "session_id", Value: sessionID})
+	w := httptest.NewRecorder()
+	srv.ServeHTTP(w, req)
+
+	if w.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("expected 405, got %d", w.Code)
+	}
+	if sess := srv.sessions.Get(sessionID); sess == nil {
+		t.Fatal("session should not be deleted by GET")
+	}
+}
+
+func TestGitHubAuthRedirectEscapesParams(t *testing.T) {
+	srv := newTestServerWithAuth(t)
+	srv.config.BaseURL = "https://example.com/sub?x=1&y=2"
+
+	req := httptest.NewRequest("GET", "/auth/github", nil)
 	w := httptest.NewRecorder()
 	srv.ServeHTTP(w, req)
 
 	if w.Code != http.StatusTemporaryRedirect {
 		t.Fatalf("expected 307, got %d", w.Code)
 	}
-	if sess := srv.sessions.Get(sessionID); sess != nil {
-		t.Fatal("session should have been deleted")
+	loc, err := url.Parse(w.Header().Get("Location"))
+	if err != nil {
+		t.Fatalf("invalid Location: %v", err)
+	}
+	q := loc.Query()
+	if got, want := q.Get("redirect_uri"), "https://example.com/sub?x=1&y=2/auth/callback"; got != want {
+		t.Fatalf("redirect_uri = %q, want %q", got, want)
+	}
+	if q.Get("client_id") != "fake-id" || q.Get("scope") != "read:user" || q.Get("state") == "" {
+		t.Fatalf("unexpected query: %v", q)
 	}
 }
