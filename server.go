@@ -66,7 +66,7 @@ func (s *Server) routes() {
 		s.mux.HandleFunc("GET /login", s.handleLoginPage)
 		s.mux.HandleFunc("GET /auth/github", s.handleGitHubAuth)
 		s.mux.HandleFunc("GET /auth/callback", s.handleGitHubCallback)
-		s.mux.HandleFunc("GET /auth/logout", s.handleLogout)
+		s.mux.HandleFunc("POST /auth/logout", s.handleLogout)
 		s.mux.Handle("GET /ui", s.withSessionAuth(http.HandlerFunc(s.handleUploadPage)))
 	}
 }

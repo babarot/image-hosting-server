@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -130,15 +131,18 @@ func (s *OAuthStateStore) cleanup() {
 
 const sessionTTL = 24 * time.Hour
 
+// githubClient bounds calls to GitHub so a stalled response cannot hang the
+// OAuth callback.
+var githubClient = &http.Client{Timeout: 10 * time.Second}
+
 func (s *Server) handleGitHubAuth(w http.ResponseWriter, r *http.Request) {
-	state := s.oauthStates.Generate()
-	redirectURL := fmt.Sprintf(
-		"https://github.com/login/oauth/authorize?client_id=%s&redirect_uri=%s&scope=read:user&state=%s",
-		s.config.GitHubClientID,
-		s.config.BaseURL+"/auth/callback",
-		state,
-	)
-	http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
+	q := url.Values{
+		"client_id":    {s.config.GitHubClientID},
+		"redirect_uri": {s.config.BaseURL + "/auth/callback"},
+		"scope":        {"read:user"},
+		"state":        {s.oauthStates.Generate()},
+	}
+	http.Redirect(w, r, "https://github.com/login/oauth/authorize?"+q.Encode(), http.StatusTemporaryRedirect)
 }
 
 func (s *Server) handleGitHubCallback(w http.ResponseWriter, r *http.Request) {
@@ -202,7 +206,8 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		MaxAge:   -1,
 	})
-	http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+	// 303 so the browser follows with GET after the POST.
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
 type githubUser struct {
@@ -211,20 +216,19 @@ type githubUser struct {
 }
 
 func (s *Server) exchangeCode(code string) (string, error) {
-	body := fmt.Sprintf(
-		"client_id=%s&client_secret=%s&code=%s",
-		s.config.GitHubClientID,
-		s.config.GitHubClientSecret,
-		code,
-	)
-	req, err := http.NewRequest("POST", "https://github.com/login/oauth/access_token", strings.NewReader(body))
+	body := url.Values{
+		"client_id":     {s.config.GitHubClientID},
+		"client_secret": {s.config.GitHubClientSecret},
+		"code":          {code},
+	}
+	req, err := http.NewRequest("POST", "https://github.com/login/oauth/access_token", strings.NewReader(body.Encode()))
 	if err != nil {
 		return "", err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Accept", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := githubClient.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -251,7 +255,7 @@ func (s *Server) fetchGitHubUser(token string) (*githubUser, error) {
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Accept", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := githubClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
