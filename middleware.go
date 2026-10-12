@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/netip"
 	"strings"
 	"sync"
 	"time"
@@ -31,7 +32,7 @@ func (s *Server) withAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		apiKey := r.Header.Get("X-API-Key")
 		if subtle.ConstantTimeCompare([]byte(apiKey), []byte(s.config.APIKey)) != 1 {
-			s.logger.Warn("auth: invalid API key", "ip", clientIP(r))
+			s.logger.Warn("auth: invalid API key", "ip", s.clientIP(r))
 			writeError(w, http.StatusUnauthorized, "unauthorized")
 			return
 		}
@@ -60,7 +61,7 @@ func (s *Server) withUploadAuth(next http.Handler) http.Handler {
 				return
 			}
 		}
-		s.logger.Warn("auth: unauthorized upload attempt", "ip", clientIP(r))
+		s.logger.Warn("auth: unauthorized upload attempt", "ip", s.clientIP(r))
 		writeError(w, http.StatusUnauthorized, "unauthorized")
 	})
 }
@@ -80,7 +81,7 @@ func (s *Server) withSessionAuth(next http.Handler) http.Handler {
 // withRateLimit enforces per-IP rate limiting using a token bucket algorithm.
 func (s *Server) withRateLimit(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ip := clientIP(r)
+		ip := s.clientIP(r)
 		if !s.limiter.Allow(ip) {
 			s.logger.Warn("rate limit exceeded", "ip", ip)
 			writeError(w, http.StatusTooManyRequests, "rate limit exceeded")
@@ -100,7 +101,7 @@ func (s *Server) withLogging(next http.Handler) http.Handler {
 			slog.String("method", r.Method),
 			slog.String("path", r.URL.Path),
 			slog.Int("status", sw.status),
-			slog.String("ip", clientIP(r)),
+			slog.String("ip", s.clientIP(r)),
 			slog.String("duration", time.Since(start).String()),
 		)
 	})
@@ -120,14 +121,14 @@ func (w *statusWriter) WriteHeader(status int) {
 	w.ResponseWriter.WriteHeader(status)
 }
 
-// clientIP extracts the client IP, preferring Cloudflare headers.
-func clientIP(r *http.Request) string {
-	if ip := r.Header.Get("CF-Connecting-IP"); ip != "" {
-		return ip
-	}
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		parts := strings.SplitN(xff, ",", 2)
-		return strings.TrimSpace(parts[0])
+// clientIP returns the client IP used for rate limiting and logs. The header
+// named by TrustedIPHeader is used only when configured, since clients can
+// set any header themselves when the server is reachable without the proxy.
+func (s *Server) clientIP(r *http.Request) string {
+	if h := s.config.TrustedIPHeader; h != "" {
+		if addr, err := netip.ParseAddr(strings.TrimSpace(r.Header.Get(h))); err == nil {
+			return addr.String()
+		}
 	}
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {

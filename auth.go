@@ -144,7 +144,7 @@ func (s *Server) handleGitHubAuth(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleGitHubCallback(w http.ResponseWriter, r *http.Request) {
 	state := r.URL.Query().Get("state")
 	if !s.oauthStates.Validate(state) {
-		s.logger.Warn("oauth: invalid state", "ip", clientIP(r))
+		s.logger.Warn("oauth: invalid state", "ip", s.clientIP(r))
 		writeError(w, http.StatusBadRequest, "invalid or expired state")
 		return
 	}
@@ -170,7 +170,7 @@ func (s *Server) handleGitHubCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !s.isAllowedUser(user.Login) {
-		s.logger.Warn("oauth: user not allowed", "user", user.Login, "ip", clientIP(r))
+		s.logger.Warn("oauth: user not allowed", "user", user.Login, "ip", s.clientIP(r))
 		writeError(w, http.StatusForbidden, "user not authorized")
 		return
 	}
@@ -187,7 +187,7 @@ func (s *Server) handleGitHubCallback(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   int(sessionTTL.Seconds()),
 	})
 
-	s.logger.Info("oauth: login success", "user", user.Login, "ip", clientIP(r))
+	s.logger.Info("oauth: login success", "user", user.Login, "ip", s.clientIP(r))
 	http.Redirect(w, r, "/ui", http.StatusTemporaryRedirect)
 }
 

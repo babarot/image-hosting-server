@@ -30,8 +30,9 @@ func main() {
 		ListenAddr:         getEnv("IMAGE_HOSTING_LISTEN_ADDR", ":8080"),
 		GitHubClientID:     os.Getenv("GITHUB_CLIENT_ID"),
 		GitHubClientSecret: os.Getenv("GITHUB_CLIENT_SECRET"),
-		GitHubAllowedUsers:       allowedUsers,
+		GitHubAllowedUsers: allowedUsers,
 		AuthDisabled:       os.Getenv("AUTH_DISABLED") == "true",
+		TrustedIPHeader:    os.Getenv("IMAGE_HOSTING_TRUSTED_IP_HEADER"),
 	}
 
 	if cfg.APIKey == "" {
@@ -75,7 +76,7 @@ func main() {
 		}
 	}()
 
-	logger.Info("starting server", "addr", cfg.ListenAddr, "upload_dir", cfg.UploadDir)
+	logger.Info("starting server", "addr", cfg.ListenAddr, "upload_dir", cfg.UploadDir, "trusted_ip_header", cfg.TrustedIPHeader)
 	if err := httpServer.ListenAndServe(); err != http.ErrServerClosed {
 		logger.Error("server error", "error", err)
 		os.Exit(1)

@@ -16,8 +16,9 @@ type Config struct {
 	ListenAddr         string
 	GitHubClientID     string
 	GitHubClientSecret string
-	GitHubAllowedUsers       []string
+	GitHubAllowedUsers []string
 	AuthDisabled       bool
+	TrustedIPHeader    string
 }
 
 type Server struct {

@@ -97,27 +97,59 @@ func TestSessionAuthRedirectsToLogin(t *testing.T) {
 	}
 }
 
-func TestClientIPFromCFHeader(t *testing.T) {
-	req := httptest.NewRequest("GET", "/", nil)
-	req.Header.Set("CF-Connecting-IP", "1.2.3.4")
-	if ip := clientIP(req); ip != "1.2.3.4" {
-		t.Fatalf("expected 1.2.3.4, got %q", ip)
+func TestClientIP(t *testing.T) {
+	tests := []struct {
+		name          string
+		trustedHeader string
+		headers       map[string]string
+		want          string
+	}{
+		{
+			name: "remote addr",
+			want: "10.0.0.1",
+		},
+		{
+			name:    "untrusted headers are ignored",
+			headers: map[string]string{"CF-Connecting-IP": "1.2.3.4", "X-Forwarded-For": "5.6.7.8"},
+			want:    "10.0.0.1",
+		},
+		{
+			name:          "trusted header",
+			trustedHeader: "CF-Connecting-IP",
+			headers:       map[string]string{"CF-Connecting-IP": "1.2.3.4"},
+			want:          "1.2.3.4",
+		},
+		{
+			name:          "trusted header with IPv6 is normalized",
+			trustedHeader: "CF-Connecting-IP",
+			headers:       map[string]string{"CF-Connecting-IP": "2001:DB8:0:0::1"},
+			want:          "2001:db8::1",
+		},
+		{
+			name:          "trusted header with invalid value falls back",
+			trustedHeader: "X-Real-IP",
+			headers:       map[string]string{"X-Real-IP": "1.2.3.4, 5.6.7.8"},
+			want:          "10.0.0.1",
+		},
+		{
+			name:          "trusted header missing falls back",
+			trustedHeader: "CF-Connecting-IP",
+			want:          "10.0.0.1",
+		},
 	}
-}
-
-func TestClientIPFromXFF(t *testing.T) {
-	req := httptest.NewRequest("GET", "/", nil)
-	req.Header.Set("X-Forwarded-For", "5.6.7.8, 9.10.11.12")
-	if ip := clientIP(req); ip != "5.6.7.8" {
-		t.Fatalf("expected 5.6.7.8, got %q", ip)
-	}
-}
-
-func TestClientIPFromRemoteAddr(t *testing.T) {
-	req := httptest.NewRequest("GET", "/", nil)
-	req.RemoteAddr = "10.0.0.1:12345"
-	if ip := clientIP(req); ip != "10.0.0.1" {
-		t.Fatalf("expected 10.0.0.1, got %q", ip)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			srv := newTestServer(t)
+			srv.config.TrustedIPHeader = tt.trustedHeader
+			req := httptest.NewRequest("GET", "/", nil)
+			req.RemoteAddr = "10.0.0.1:12345"
+			for k, v := range tt.headers {
+				req.Header.Set(k, v)
+			}
+			if ip := srv.clientIP(req); ip != tt.want {
+				t.Fatalf("expected %q, got %q", tt.want, ip)
+			}
+		})
 	}
 }
 

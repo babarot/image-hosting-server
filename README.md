@@ -138,6 +138,7 @@ docker run -d \
 | `IMAGE_HOSTING_BASE_URL` | Public URL base | `http://localhost:8080` | No |
 | `IMAGE_HOSTING_UPLOAD_DIR` | File storage path | `/data/images` | No |
 | `IMAGE_HOSTING_LISTEN_ADDR` | Listen address | `:8080` | No |
+| `IMAGE_HOSTING_TRUSTED_IP_HEADER` | Header holding the client IP set by your reverse proxy (e.g. `CF-Connecting-IP`, `X-Real-IP`). Unset means the connection's address is used | - | No |
 | `GITHUB_CLIENT_ID` | GitHub OAuth client ID | - | For Web UI |
 | `GITHUB_CLIENT_SECRET` | GitHub OAuth client secret | - | For Web UI |
 | `GITHUB_ALLOWED_USERS` | Comma-separated allowed GitHub usernames | - | For Web UI |
