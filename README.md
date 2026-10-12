@@ -52,7 +52,7 @@ When `GITHUB_CLIENT_ID` is set, a browser-based upload interface is available at
 1. Click "Sign in with GitHub" on the login page
 2. Authorize the OAuth App on GitHub
 3. Drag & drop files (or click / paste) on the upload page
-4. Select a copy format (plain / markdown / img tag / picture tag)
+4. Select a copy format (plain / markdown / img tag / picture tag) and the name source (original / hash)
 5. Copy the returned URL with the copy button
 
 ### Features
@@ -61,6 +61,7 @@ When `GITHUB_CLIENT_ID` is set, a browser-based upload interface is available at
 - Upload progress bar
 - Copy format selector (plain URL, Markdown, `<img>`, `<picture>`)
 - Inline copy preview that updates on format switch
+- Name toggle: show and use the original or hashed filename as alt text (remembered per browser)
 - Image thumbnail preview (desktop)
 - Image dimensions and file size in upload results
 - Dark / light mode (follows OS preference, styled with [terminal.css](https://terminalcss.xyz/))
