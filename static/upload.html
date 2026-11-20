@@ -388,29 +388,83 @@
   const copyLabel = 'copy';
   const copiedLabel = 'copied!';
 
-  function handleFiles(files) { for (const file of files) uploadFile(file); }
+  // Upload a few files at a time and retry on 429, so dropping many files at
+  // once does not trip the server's or Cloudflare's rate limit.
+  const MAX_CONCURRENT = 3;
+  const MAX_RETRIES = 5;
+  const queue = [];
+  let active = 0;
 
-  function uploadFile(file) {
+  function handleFiles(files) {
+    for (const file of files) queue.push({ file, card: createCard(file), attempt: 0 });
+    pump();
+  }
+
+  function pump() {
+    while (active < MAX_CONCURRENT && queue.length > 0) {
+      active++;
+      uploadFile(queue.shift());
+    }
+  }
+
+  function done() { active--; pump(); }
+
+  function createCard(file) {
     toolbar.classList.add('visible');
     const card = document.createElement('div');
     card.className = 'result-card uploading-card';
     card.innerHTML = `
       <div class="result-info">
-        <div class="result-meta">${esc(file.name)} &middot; ${fmtSize(file.size)}</div>
+        <div class="result-meta">${esc(file.name)} &middot; ${fmtSize(file.size)}<span class="upload-status"></span></div>
         <div class="progress-wrap"><div class="progress-bar" style="width:0%"></div></div>
       </div>`;
     results.insertBefore(card, results.firstChild);
+    return card;
+  }
 
+  function retryDelay(xhr, attempt) {
+    const sec = parseInt(xhr.getResponseHeader('Retry-After'), 10);
+    const base = Number.isFinite(sec) && sec > 0 ? sec * 1000 : 2000 * 2 ** attempt;
+    return Math.min(base, 60000) + Math.random() * 500;
+  }
+
+  function showError(card, file, msg) {
+    card.className = 'result-card';
+    card.innerHTML = `<div class="result-info"><span class="error-text">${esc(file.name)}: ${esc(msg)}</span></div>`;
+  }
+
+  function errorMessage(xhr) {
+    try {
+      const msg = JSON.parse(xhr.responseText).error;
+      if (msg) return msg;
+    } catch (e) {}
+    const body = (xhr.responseText || '').trim().slice(0, 80);
+    return `HTTP ${xhr.status}${body ? ' (' + body + ')' : ''}`;
+  }
+
+  function uploadFile(job) {
+    const { file, card } = job;
     const fd = new FormData();
     fd.append('file', file);
     const xhr = new XMLHttpRequest();
     const bar = card.querySelector('.progress-bar');
+    const status = card.querySelector('.upload-status');
+    status.textContent = '';
+    bar.style.width = '0%';
 
     xhr.upload.addEventListener('progress', (e) => {
       if (e.lengthComputable) bar.style.width = (e.loaded / e.total * 100) + '%';
     });
 
     xhr.addEventListener('load', () => {
+      if (xhr.status === 429 && job.attempt < MAX_RETRIES) {
+        const delay = retryDelay(xhr, job.attempt);
+        job.attempt++;
+        status.textContent = ` · rate limited, retrying in ${Math.ceil(delay / 1000)}s`;
+        // Keep the slot while waiting so the other uploads back off too.
+        setTimeout(() => uploadFile(job), delay);
+        return;
+      }
       if (xhr.status === 201) {
         const d = JSON.parse(xhr.responseText);
         const entry = { url: d.url, filename: d.filename, original: file.name };
@@ -433,16 +487,14 @@
           navigator.clipboard.writeText(formatText(entry)).then(() => flashCopied(copyBtn));
         });
       } else {
-        let msg = 'Upload failed';
-        try { msg = JSON.parse(xhr.responseText).error; } catch(e) {}
-        card.className = 'result-card';
-        card.innerHTML = `<div class="result-info"><span class="error-text">${esc(file.name)}: ${esc(msg)}</span></div>`;
+        showError(card, file, errorMessage(xhr));
       }
+      done();
     });
 
     xhr.addEventListener('error', () => {
-      card.className = 'result-card';
-      card.innerHTML = `<div class="result-info"><span class="error-text">${esc(file.name)}: Network error</span></div>`;
+      showError(card, file, 'Network error');
+      done();
     });
 
     xhr.open('POST', '/api/upload');

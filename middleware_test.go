@@ -157,8 +157,9 @@ func TestRateLimiting(t *testing.T) {
 	srv := newTestServer(t)
 	pngData := createTestPNG(t)
 
-	// Exhaust rate limit (burst=5)
-	for i := 0; i < 6; i++ {
+	// Exhaust rate limit (burst=30)
+	const burst = 30
+	for i := 0; i <= burst; i++ {
 		body, contentType := createMultipartFile(t, "test.png", pngData)
 		req := httptest.NewRequest("POST", "/api/upload", body)
 		req.Header.Set("Content-Type", contentType)
@@ -166,11 +167,16 @@ func TestRateLimiting(t *testing.T) {
 		w := httptest.NewRecorder()
 		srv.ServeHTTP(w, req)
 
-		if i < 5 && w.Code != http.StatusCreated {
+		if i < burst && w.Code != http.StatusCreated {
 			t.Fatalf("request %d: expected 201, got %d", i, w.Code)
 		}
-		if i == 5 && w.Code != http.StatusTooManyRequests {
-			t.Fatalf("request %d: expected 429, got %d", i, w.Code)
+		if i == burst {
+			if w.Code != http.StatusTooManyRequests {
+				t.Fatalf("request %d: expected 429, got %d", i, w.Code)
+			}
+			if w.Header().Get("Retry-After") == "" {
+				t.Fatal("expected Retry-After header on 429")
+			}
 		}
 	}
 }
