@@ -84,6 +84,7 @@ func (s *Server) withRateLimit(next http.Handler) http.Handler {
 		ip := s.clientIP(r)
 		if !s.limiter.Allow(ip) {
 			s.logger.Warn("rate limit exceeded", "ip", ip)
+			w.Header().Set("Retry-After", "1")
 			writeError(w, http.StatusTooManyRequests, "rate limit exceeded")
 			return
 		}

@@ -34,7 +34,7 @@ func NewServer(cfg Config, logger *slog.Logger) *Server {
 	s := &Server{
 		config:      cfg,
 		logger:      logger,
-		limiter:     NewIPRateLimiter(rate.Every(2*time.Second), 5), // 30 req/min, burst 5
+		limiter:     NewIPRateLimiter(rate.Every(500*time.Millisecond), 30), // 120 req/min, burst 30
 		mux:         http.NewServeMux(),
 		sessions:    NewSessionStore(),
 		oauthStates: NewOAuthStateStore(),

@@ -5,7 +5,7 @@ Lightweight Go image hosting server with API key auth, rate limiting, and immuta
 ## Features
 
 - API key authentication (constant-time compare)
-- IP-based rate limiting (token bucket: 30 req/min, burst 5)
+- IP-based rate limiting (token bucket: 120 req/min, burst 30)
 - Extension + MIME sniffing double validation
 - Path traversal prevention
 - Immutable `Cache-Control` headers for CDN caching
